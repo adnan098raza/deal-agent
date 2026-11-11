@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deal Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --bg:#0b0f17; --panel:rgba(15,23,42,.78); --panel-solid:#0f172a; --well:#020617; --line:#1e293b; --line-2:#334155;
+    --fg:#f8fafc; --text:#e2e8f0; --soft:#cbd5e1; --muted:#94a3b8; --dim:#64748b;
+    --blue:#3b82f6; --blue-hi:#60a5fa; --blue-bg:rgba(59,130,246,.1); --blue-bd:rgba(59,130,246,.25);
+    --green:#34d399; --green-bg:rgba(16,185,129,.1); --green-bd:rgba(16,185,129,.25);
+    --amber:#fbbf24; --amber-bg:rgba(245,158,11,.1); --amber-bd:rgba(245,158,11,.25);
+    --rose:#fb7185; --rose-bg:rgba(244,63,94,.1); --rose-bd:rgba(244,63,94,.25);
+    --violet:#a78bfa; --violet-bg:rgba(139,92,246,.1); --violet-bd:rgba(139,92,246,.25);
+    --radius:12px;
+  }
+  * { box-sizing:border-box }
+  html { color-scheme:dark }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 Inter,"Segoe UI",system-ui,sans-serif;
+         -webkit-font-smoothing:antialiased }
+  ::selection { background:var(--blue); color:#fff }
+  a { color:var(--blue-hi); text-decoration:none } a:hover { text-decoration:underline }
+  .wrap { max-width:1280px; margin:0 auto; padding:24px 24px 64px }
+  @media (max-width:640px) { .wrap { padding:16px 16px 48px } }
+
+  /* icons */
+  .ic { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
+        stroke-linejoin:round; vertical-align:-3px }
+  .ic.sm { width:14px; height:14px; vertical-align:-2px } .ic.lg { width:24px; height:24px }
+  .spin { animation:spin 1s linear infinite } @keyframes spin { to { transform:rotate(360deg) } }
+
+  /* header */
+  .top { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+         border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:24px }
+  .brand { display:flex; align-items:center; gap:32px; flex-wrap:wrap }
+  .brand h1 { margin:0; font-size:20px; font-weight:700; color:var(--fg); letter-spacing:-.02em; display:flex; gap:8px; align-items:center }
+  .brand h1 .logo { width:28px; height:28px; border-radius:8px; background:var(--blue); color:#fff; display:grid; place-items:center }
+  nav.tabs { display:flex; gap:24px }
+  nav.tabs a { position:relative; padding:6px 0; color:var(--muted); font-weight:500; font-size:14px; text-decoration:none }
+  nav.tabs a:hover { color:var(--soft) }
+  nav.tabs a.on { color:var(--fg) }
+  nav.tabs a.on::after { content:""; position:absolute; left:0; right:0; bottom:-13px; height:2px; border-radius:2px; background:var(--blue) }
+  @media (max-width:640px) {
+    .top { gap:12px } .brand { gap:12px; width:100% } .brand h1 { font-size:18px }
+    nav.tabs { gap:16px; width:100%; overflow-x:auto; scrollbar-width:none } nav.tabs a { flex:none }
+    nav.tabs a.on::after { bottom:-2px }
+    #run-form, #run-form .btn { width:100%; justify-content:center }
+  }
+
+  /* buttons & inputs */
+  .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line-2); background:var(--panel-solid);
+         color:var(--soft); border-radius:8px; padding:7px 14px; font-family:inherit; font-size:13px; font-weight:500;
+         line-height:1.25; cursor:pointer; white-space:nowrap;
+         transition:background .15s, border-color .15s, color .15s }
+  .btn:hover { background:#1e293b; color:var(--fg); text-decoration:none }
+  .btn.primary { background:var(--blue); border-color:var(--blue); color:#fff } .btn.primary:hover { background:#2563eb }
+  .btn.danger:hover { color:var(--rose); border-color:var(--rose-bd) }
+  .btn:disabled { opacity:.55; cursor:default }
+  .icon-btn { display:inline-grid; place-items:center; width:30px; height:30px; border-radius:8px; border:1px solid transparent;
+              background:none; color:var(--muted); cursor:pointer; padding:0 }
+  .icon-btn:hover { background:#1e293b; color:var(--fg); border-color:var(--line-2); text-decoration:none }
+  .icon-btn.rose:hover { color:var(--rose) } .icon-btn.amber:hover { color:var(--amber) }
+  input, select, textarea { font:inherit; font-size:14px; color:var(--text); background:var(--well); border:1px solid var(--line);
+                            border-radius:8px; padding:8px 12px; outline:none; transition:border-color .15s }
+  input:focus, select:focus, textarea:focus { border-color:var(--blue) }
+  input::placeholder, textarea::placeholder { color:var(--dim) }
+  input[type=checkbox] { width:16px; height:16px; accent-color:var(--blue); padding:0; vertical-align:-3px }
+  select { cursor:pointer }
+  label.inl { display:inline-flex; align-items:center; gap:8px; color:var(--soft); font-size:14px; cursor:pointer; user-select:none }
+  form.inline { display:inline }
+
+  /* panels */
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.25) }
+  .pad { padding:20px } .pad-sm { padding:16px }
+  .stack > * + * { margin-top:16px }
+  .eyebrow { font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted) }
+  .muted { color:var(--muted) } .dim { color:var(--dim) } .small { font-size:12px } .tiny { font-size:11px }
+  .mono { font-family:"Cascadia Mono",Consolas,ui-monospace,monospace }
+  h2 { margin:0; font-size:18px; font-weight:700; color:var(--fg); letter-spacing:-.01em }
+  h3 { margin:0; font-size:15px; font-weight:600; color:var(--fg) }
+
+  /* pills */
+  .pill { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:6px; font-size:12px; font-weight:600;
+          border:1px solid var(--line); background:var(--well); color:var(--muted); white-space:nowrap }
+  .pill.blue { background:var(--blue-bg); border-color:var(--blue-bd); color:var(--blue-hi) }
+  .pill.green, .Live { background:var(--green-bg); border-color:var(--green-bd); color:var(--green) }
+  .pill.amber, .Price-changed { background:var(--amber-bg); border-color:var(--amber-bd); color:var(--amber) }
+  .pill.rose, .Out-of-stock { background:var(--rose-bg); border-color:var(--rose-bd); color:var(--rose) }
+  .pill.violet { background:var(--violet-bg); border-color:var(--violet-bd); color:var(--violet) }
+  .Expired { color:var(--dim) }
+  .attr { font-size:11px; padding:2px 8px; border-radius:6px; background:var(--well); border:1px solid var(--line); color:var(--muted);
+          white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis }
+  .attr b { color:var(--soft); font-weight:600 }
+  .t-official_store { color:var(--green) } .t-major_retailer { color:var(--blue-hi) }
+  .t-marketplace { color:var(--amber) } .t-unknown, .t-suspicious { color:var(--rose) }
+
+  /* score badges */
+  .score { display:inline-flex; align-items:center; justify-content:center; min-width:34px; padding:2px 8px; border-radius:6px;
+           font-weight:700; font-size:12px; font-variant-numeric:tabular-nums; color:#fff; background:#475569 }
+  .s-top { background:#059669 } .s-good { background:var(--blue) } .s-mid { background:#475569 } .s-low, .s-none { background:#1e293b; color:var(--muted) }
+  .num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap }
+
+  /* tables */
+  .table-wrap { overflow-x:auto }
+  table.t { width:100%; border-collapse:collapse; font-size:14px; color:var(--soft) }
+  table.t thead th { background:var(--well); text-align:left; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+                     color:var(--muted); padding:12px 16px; border-bottom:1px solid var(--line); white-space:nowrap }
+  table.t td { padding:12px 16px; border-bottom:1px solid rgba(30,41,59,.6); vertical-align:middle }
+  table.t tbody tr { transition:background .12s } table.t tbody tr:hover { background:rgba(30,41,59,.45) }
+  table.t tbody tr:last-child td { border-bottom:none }
+
+  /* messages */
+  .banner { display:flex; gap:10px; align-items:flex-start; padding:12px 16px; border-radius:10px; font-size:14px; margin-bottom:16px }
+  .banner.err { background:var(--rose-bg); border:1px solid var(--rose-bd); color:#fecdd3 }
+  .banner.ok { background:var(--green-bg); border:1px solid var(--green-bd); color:#a7f3d0 }
+  .toast { position:fixed; right:24px; bottom:24px; z-index:60; display:flex; align-items:center; gap:12px; padding:12px 16px;
+           border-radius:12px; background:var(--panel-solid); border:1px solid var(--line-2); box-shadow:0 20px 40px rgba(0,0,0,.45);
+           color:var(--text); font-size:14px; font-weight:500; animation:rise .25s ease-out; max-width:calc(100vw - 48px) }
+  .toast .ic { color:var(--green) } .toast.info .ic { color:var(--blue-hi) }
+  @keyframes rise { from { opacity:0; transform:translateY(12px) } }
+
+  /* drawer */
+  .scrim { position:fixed; inset:0; z-index:50; background:rgba(2,6,23,.75); backdrop-filter:blur(4px); display:none; justify-content:flex-end }
+  .scrim.open { display:flex; animation:fade .15s ease-out }
+  @keyframes fade { from { opacity:0 } }
+  .drawer { width:100%; max-width:640px; height:100%; overflow-y:auto; background:var(--panel-solid); border-left:1px solid var(--line);
+            box-shadow:-20px 0 40px rgba(0,0,0,.4); animation:slide .2s ease-out }
+  @keyframes slide { from { transform:translateX(40px); opacity:.6 } }
+  .drawer-head { position:sticky; top:0; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:12px;
+                 padding:16px 24px; background:var(--panel-solid); border-bottom:1px solid var(--line) }
+  .drawer-body { padding:24px }
+  .loading { padding:48px; text-align:center; color:var(--muted) }
+  .ph { display:none } .none > .ph { display:grid; place-items:center }
+  .nowrap { white-space:nowrap }
+  @media (max-width:760px) { .hide-sm { display:none } }
+  {% block style %}{% endblock %}
+</style>
+</head>
+<body data-running="{{ running|join(',') }}">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.94 14.06 4 12l5.94-2.06L12 4l2.06 5.94L20 12l-5.94 2.06L12 20z"/><path d="M19 3v4M17 5h4"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-xcircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 3 20 12 6 21z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-grad" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-percent" viewBox="0 0 24 24"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
+  <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M8 13h8M8 17h8"/></symbol>
+</svg>
+{% from "_ui.html" import icon %}
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1><span class="logo">{{ icon("cart", "sm") }}</span>Deal Agent</h1>
+      <nav class="tabs">
+        <a href="/" class="{{ 'on' if nav == 'deals' else '' }}">Deals</a>
+        <a href="/watchlist" class="{{ 'on' if nav == 'watchlist' else '' }}">Watchlist</a>
+        <a href="/prefs" class="{{ 'on' if nav == 'prefs' else '' }}">Preferences</a>
+        <a href="/status" class="{{ 'on' if nav == 'status' else '' }}">Status</a>
+      </nav>
+    </div>
+    <form method="post" action="/run/discovery" class="inline" id="run-form">
+      <input type="hidden" name="back" value="{{ request.url.path }}{{ '?' ~ request.url.query if request.url.query else '' }}">
+      {% set busy = 'discovery' in running %}
+      <button class="btn primary" id="run-btn" {{ 'disabled' if busy else '' }} title="Fetch all sources, score new deals and push great ones now">
+        {{ icon("refresh", "sm spin" if busy else "sm") }}<span>{{ 'Scanning shops…' if busy else 'Find deals now' }}</span>
+      </button>
+    </form>
+  </header>
+
+  {% block content %}{% endblock %}
+</div>
+
+<div class="scrim" id="scrim" aria-hidden="true">
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Deal details">
+    <div class="drawer-head">
+      <span class="eyebrow">Deal details</span>
+      <div style="display:flex;gap:6px">
+        <a class="icon-btn" id="drawer-full" href="#" title="Open as page">{{ icon("ext", "sm") }}</a>
+        <button class="icon-btn" id="drawer-close" title="Close (Esc)">{{ icon("x") }}</button>
+      </div>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+</div>
+
+{% if msg %}<div class="toast" id="toast">{{ icon("check") }}<span>{{ msg }}</span></div>{% endif %}
+
+<script>
+(() => {
+  const here = location.pathname + location.search.replace(/([?&])msg=[^&]*&?/, "$1").replace(/[?&]$/, "");
+  if (location.search.includes("msg=")) history.replaceState(null, "", here);
+
+  function toast(text, info, action) {
+    document.querySelectorAll(".toast").forEach(t => t.remove());
+    const t = document.createElement("div");
+    t.className = "toast" + (info ? " info" : "");
+    t.innerHTML = `<svg class="ic"><use href="#i-${info ? "info" : "check"}"/></svg><span></span>`;
+    t.querySelector("span").textContent = text;
+    if (action) { const b = document.createElement("button"); b.className = "btn"; b.textContent = action.label; b.onclick = action.fn; t.append(b); }
+    document.body.append(t);
+    if (!action) setTimeout(() => t.remove(), 4000);
+  }
+  const first = document.getElementById("toast");
+  if (first) setTimeout(() => first.remove(), 4000);
+
+  // ---- drawer
+  const scrim = document.getElementById("scrim"), body = document.getElementById("drawer-body"), full = document.getElementById("drawer-full");
+  function closeDrawer() { scrim.classList.remove("open"); scrim.setAttribute("aria-hidden", "true"); body.innerHTML = ""; }
+  async function openDrawer(href) {
+    full.href = href;
+    body.innerHTML = '<div class="loading">Loading…</div>';
+    scrim.classList.add("open"); scrim.setAttribute("aria-hidden", "false");
+    try {
+      const r = await fetch(href + (href.includes("?") ? "&" : "?") + "partial=1");
+      if (!r.ok) throw new Error(r.status);
+      body.innerHTML = await r.text();
+      body.querySelectorAll('input[name="back"]').forEach(i => i.value = here);
+    } catch (e) { body.innerHTML = '<div class="loading">Could not load this deal.</div>'; }
+  }
+  document.addEventListener("click", e => {
+    const a = e.target.closest("a[data-drawer]");
+    if (a && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); openDrawer(a.getAttribute("href")); return; }
+    const card = e.target.closest("[data-href]");
+    if (card && !e.target.closest("a, button, form, input")) openDrawer(card.dataset.href);
+  });
+  scrim.addEventListener("click", e => { if (e.target === scrim) closeDrawer(); });
+  document.getElementById("drawer-close").onclick = closeDrawer;
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && scrim.classList.contains("open")) closeDrawer(); });
+
+  // ---- running jobs: spinner until the scan finishes, then offer a reload
+  let running = (document.body.dataset.running || "").split(",").filter(Boolean);
+  const btn = document.getElementById("run-btn");
+  async function poll() {
+    try {
+      const now = (await (await fetch("/api/running")).json()).running;
+      const done = running.filter(j => !now.includes(j));
+      running = now;
+      if (!now.includes("discovery") && btn.disabled) {
+        btn.disabled = false; btn.querySelector(".ic").classList.remove("spin"); btn.querySelector("span").textContent = "Find deals now";
+      }
+      if (done.length) toast(`${done.join(", ")} finished`, false, { label: "Reload", fn: () => location.reload() });
+    } catch (e) { /* agent restarting */ }
+    if (running.length) setTimeout(poll, 3000);
+  }
+  if (running.length) setTimeout(poll, 3000);
+  window.dealAgent = { toast, openDrawer };
+})();
+</script>
+</body>
+</html>

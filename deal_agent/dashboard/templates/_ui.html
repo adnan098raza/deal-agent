@@ -1,0 +1,24 @@
+{% macro icon(name, cls="") %}<svg class="ic {{ cls }}" aria-hidden="true"><use href="#i-{{ name }}"/></svg>{% endmacro %}
+
+{% macro score(value) %}<span class="score {{ value|score_class }}" title="AI deal score (0-10)">{{ '%.1f'|format(value) if value is not none else '–' }}</span>{% endmacro %}
+
+{% macro status_pill(d) %}{% if d.status != 'Live' %}<span class="pill {{ d.status|replace(' ', '-') }}">{{ d.status }}</span>{% endif %}{% endmacro %}
+
+{% macro kind_pills(kind) %}{% for k in (kind or '').split(',') if k %}
+  {% if k == 'instant' %}<span class="pill rose">{{ icon("flame", "sm") }}instant</span>
+  {% elif k == 'watchlist' %}<span class="pill violet">{{ icon("eye", "sm") }}watchlist</span>
+  {% else %}<span class="pill blue">{{ icon("bell", "sm") }}{{ k }}</span>{% endif %}
+{% endfor %}{% endmacro %}
+
+{% macro deal_actions(d, back) %}
+  {% if not d.dismissed %}
+  <form class="inline" method="post" action="/deal/{{ d.id }}/snooze"><input type="hidden" name="back" value="{{ back }}">
+    <button class="icon-btn amber" title="Snooze (remind me later)">{{ icon("clock", "sm") }}</button></form>
+  <form class="inline" method="post" action="/deal/{{ d.id }}/dismiss"><input type="hidden" name="back" value="{{ back }}">
+    <button class="icon-btn rose" title="Not interested (also lowers similar deals)">{{ icon("xcircle", "sm") }}</button></form>
+  {% else %}
+  <form class="inline" method="post" action="/deal/{{ d.id }}/restore"><input type="hidden" name="back" value="{{ back }}">
+    <button class="icon-btn" title="Undo 'not interested'">{{ icon("undo", "sm") }}</button></form>
+  {% endif %}
+  <a class="icon-btn" href="{{ d.link }}" target="_blank" rel="noopener" title="Open deal">{{ icon("ext", "sm") }}</a>
+{% endmacro %}

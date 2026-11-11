@@ -1,0 +1,34 @@
+# Auto-generated from the agent's database whenever the watchlist changes.
+# Commit it if you use the GitHub Actions fallback; edit via CLI or dashboard.
+watchlist:
+  - query: Acqua Di Giò
+    max_price: 80.0
+  - query: YSL MYSLF Eau de Parfum
+    max_price: 80.0
+  - query: gaming mouse
+    max_price: 25.0
+  - query: headphones
+    max_price: 180.0
+  - query: ''
+    brand: Casio
+    category: jewelry_accessories
+  - query: ''
+    brand: Seiko
+    category: jewelry_accessories
+  - query: ''
+    brand: Citizen
+    category: jewelry_accessories
+  - query: duro
+    brand: Casio
+    max_price: 75.0
+  - query: MDV
+    brand: Casio
+    max_price: 75.0
+  - query: MTP-B190
+    brand: Casio
+  - query: turf
+    category: shoes
+  - query: multinockenschuhe
+    category: shoes
+  - query: TF
+    category: shoes

@@ -1,0 +1,84 @@
+# Optional cloud fallback: runs the agent hourly on GitHub Actions while your PC is off.
+#
+# Setup (see README "Cloud fallback"):
+#   1. Push this project to a PRIVATE GitHub repository (.env and data/ are git-ignored).
+#   2. Settings -> Secrets and variables -> Actions -> add secrets:
+#        GROQ_API_KEY (or GEMINI_API_KEY + LLM_PROVIDER), NTFY_TOPIC, optional NTFY_TOKEN,
+#        EMAIL_ENABLED, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_FROM, EMAIL_TO
+#   3. On the PC set HEARTBEAT_ENABLED=true in .env, so this job skips while the PC agent runs.
+#   4. Commit watchlist.yaml whenever you change the watchlist (the agent rewrites it).
+#
+# The SQLite DB is kept between runs with actions/cache; deals.xlsx is uploaded as an artifact.
+
+name: deal-agent
+
+on:
+  schedule:
+    - cron: "17 * * * *"        # hourly (GitHub may delay scheduled runs at busy times)
+  workflow_dispatch: {}
+
+concurrency:
+  group: deal-agent
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DB_PATH: data/deals.db
+      EXCEL_PATH: data/deals.xlsx
+      LOG_FILE: data/agent.log
+      TIMEZONE: Europe/Berlin
+      DASHBOARD_ENABLED: "false"
+      LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'groq' }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      GROQ_MODEL: ${{ secrets.GROQ_MODEL || 'openai/gpt-oss-120b' }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+      EMAIL_ENABLED: ${{ secrets.EMAIL_ENABLED || 'false' }}
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Restore database
+        uses: actions/cache/restore@v4
+        with:
+          path: data/deals.db
+          key: deal-db-${{ github.run_id }}
+          restore-keys: deal-db-
+
+      - name: Run due jobs
+        run: python -m deal_agent cron --skip-if-pc-online
+
+      - name: Save database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/deals.db
+          key: deal-db-${{ github.run_id }}
+
+      - name: Upload Excel log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deals-xlsx
+          path: |
+            data/deals.xlsx
+            data/agent.log
+          if-no-files-found: ignore
+          retention-days: 7

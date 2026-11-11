@@ -1,0 +1,178 @@
+# Pluggable deal sources.
+#   type: mydealz | rss | html | jsonld | mediamarkt | "your_package.module:YourSourceClass"
+#   Every request goes through the robots.txt checker and per-host rate limiting. Sources that
+#   block automated access (403/429/captcha) are skipped, logged and backed off automatically.
+#   Common options: merchant, shop_domain, category (default), trust (marketplace|comparison),
+#   min_interval_minutes.
+#
+# Status column below = result of a check with this agent's user agent on 2026-11-08.
+
+sources:
+  # ---- mydealz.de: community deals from every shop (incl. Amazon, Zalando, Otto, Douglas, ...)
+  - name: mydealz-alle
+    type: mydealz
+    url: https://www.mydealz.de/rss/alles
+    min_interval_minutes: 30
+  - name: mydealz-trending
+    type: mydealz
+    url: https://www.mydealz.de/rss/trending
+    min_interval_minutes: 30
+  - name: mydealz-elektronik
+    type: mydealz
+    url: https://www.mydealz.de/rss/gruppe/elektronik
+    category: electronics
+    min_interval_minutes: 30
+  - name: mydealz-kleidung
+    type: mydealz
+    urls:
+      - https://www.mydealz.de/rss/gruppe/kleidung
+      - https://www.mydealz.de/rss/gruppe/fashion-accessoires
+    min_interval_minutes: 30
+  - name: mydealz-schuhe
+    type: mydealz
+    urls:
+      - https://www.mydealz.de/rss/gruppe/schuhe
+      - https://www.mydealz.de/rss/gruppe/sneaker
+    category: shoes
+    min_interval_minutes: 30
+  - name: mydealz-uhren-schmuck
+    type: mydealz
+    urls:
+      - https://www.mydealz.de/rss/gruppe/uhren
+      - https://www.mydealz.de/rss/gruppe/schmuck
+      - https://www.mydealz.de/rss/gruppe/accessoires
+    min_interval_minutes: 30
+  - name: mydealz-beauty
+    type: mydealz
+    urls:
+      - https://www.mydealz.de/rss/gruppe/beauty
+      - https://www.mydealz.de/rss/gruppe/parfum
+      - https://www.mydealz.de/rss/gruppe/kosmetik
+    category: cosmetics
+    min_interval_minutes: 30
+
+  # ---- price comparison / marketplaces
+  - name: idealo-deals                    # OK: 60 server-rendered tiles
+    type: html
+    url: https://www.idealo.de/preisvergleich/deals
+    merchant: idealo
+    trust: comparison
+    min_interval_minutes: 180
+    selectors:
+      item: "[data-testid='result-item']"
+      title: "[data-testid='product-summary-title']"
+      link: "a[href]"
+      price: "[data-testid='detailed-price-info-price']"
+      discount: "[data-testid='info-tooltip-trigger']"
+      image: "img[src]"
+  - name: ebay-deals                      # OK: tiles with price, UVP and discount
+    type: html
+    url: https://www.ebay.de/deals
+    merchant: eBay
+    trust: marketplace
+    min_interval_minutes: 180
+    selectors:
+      item: ".dne-itemtile"
+      title: ".dne-itemtile-title"
+      link: "a[href]"
+      price: ".dne-itemtile-price .first"
+      original_price: ".itemtile-price-strikethrough"
+      discount: ".dne-itemtile-original-price, .clipped"
+      image: "img[src]"
+  - name: geizhals                        # BLOCKED: HTTP 403 for automated clients
+    type: html
+    enabled: false
+    url: https://geizhals.de/deals/
+    min_interval_minutes: 180
+    selectors: {item: ".productlist__item", title: ".productlist__link", price: ".gh_price"}
+
+  # ---- shops
+  - name: mediamarkt-angebote             # OK: embedded product data incl. marketplace seller
+    type: mediamarkt
+    url: https://www.mediamarkt.de/de/campaign/angebote-aktionen
+    merchant: MediaMarkt
+    category: electronics
+    min_interval_minutes: 180
+  - name: saturn-angebote                 # OK
+    type: mediamarkt
+    url: https://www.saturn.de/de/campaign/angebote-aktionen
+    merchant: Saturn
+    category: electronics
+    min_interval_minutes: 180
+  - name: mediamarkt-audio                # OK: category pages, ~12 top products each, most discounted
+    type: mediamarkt
+    urls:
+      - https://www.mediamarkt.de/de/category/kopfh%C3%B6rer-311.html      # headphones
+      - https://www.mediamarkt.de/de/category/lautsprecher-259.html        # speakers + soundbars
+    merchant: MediaMarkt
+    category: electronics
+    min_interval_minutes: 180
+  - name: mediamarkt-mice                 # OK: mouse categories (~12 top products each)
+    type: mediamarkt
+    urls:
+      - https://www.mediamarkt.de/de/category/gaming-m%C3%A4use-389.html   # gaming mice
+      - https://www.mediamarkt.de/de/category/bluetooth-maus-4417.html     # wireless / office mice
+    merchant: MediaMarkt
+    category: electronics
+    min_interval_minutes: 180
+  - name: decathlon-sale                  # OK: server-rendered product cards (~40 per page), robots.txt allows /deals
+    type: html
+    urls:
+      - https://www.decathlon.de/deals/herren-sale     # men's clothing + shoes
+      - https://www.decathlon.de/deals/ausrustung      # sports equipment
+    merchant: Decathlon
+    min_interval_minutes: 180
+    marketplace_link: "/p/mp/"            # Decathlon marketplace = third-party sellers
+    selectors:
+      item: ".product-card"
+      title: ".product-card-details__item__title"
+      link: ".product-card-details__item__title a[href]"
+      price: ".vp-price-amount"
+      original_price: ".vp-price-barred-amount"
+      discount: ".vp-price-discount"
+      image: "img.product-card-image__img"
+  - name: outletcity-metzingen            # OK: IN-STORE promotions at the outlet village (no product prices)
+    type: html                            # online shop is JS-rendered (no product data) -> not scrapeable
+    url: https://www.outletcity.com/de/metzingen/angebote/
+    merchant: Outletcity Metzingen
+    min_interval_minutes: 180
+    require: "%"                          # only offers with a discount (skips parking / WhatsApp notices)
+    selectors:
+      item: "ul.grid > li"
+      title: "figcaption"
+      link: "a[href]"
+      discount: "figcaption div strong"
+      image: "img[src]"
+  - name: flaconi-sale                # OK: JSON-LD (no original price -> LLM judges value)
+    type: jsonld
+    url: https://www.flaconi.de/kategorie/sale/
+    merchant: Flaconi
+    category: cosmetics
+    min_interval_minutes: 180
+
+  # Not scrapeable without a browser / blocked (deals still arrive via mydealz):
+  - name: amazon-de-deals                 # JS-rendered: plain HTML has no products; ToS restricts scraping
+    type: html
+    enabled: false
+    url: https://www.amazon.de/deals
+    selectors: {item: "div[data-testid='product-card']", title: ".a-truncate-full", price: ".a-price .a-offscreen"}
+  - name: douglas-sale                    # BLOCKED: "Access Denied" (bot protection)
+    type: jsonld
+    enabled: false
+    url: https://www.douglas.de/de/c/sale/05
+  - name: zalando-herren-sale             # 404 for non-browser clients (bot protection)
+    type: jsonld
+    enabled: false
+    url: https://www.zalando.de/herren-sale/
+  - name: aboutyou-maenner-sale           # JS stream (React Server Components), no product markup
+    type: jsonld
+    enabled: false
+    url: https://www.aboutyou.de/c/maenner/sale-32544
+  - name: notino-sale                     # 404 for non-browser clients
+    type: jsonld
+    enabled: false
+    url: https://www.notino.de/sale/
+  - name: otto-sale                       # sale page is a campaign overview without product data
+    type: jsonld
+    enabled: false
+    url: https://www.otto.de/sale/

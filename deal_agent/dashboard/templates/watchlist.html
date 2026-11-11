@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon %}
+{% block style %}
+  .wl-form { display:flex; flex-wrap:wrap; gap:12px; align-items:center }
+  .wl-form .grow { flex:1; min-width:220px }
+  .wl-item { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px; border-radius:10px;
+             background:var(--well); border:1px solid var(--line) }
+  .wl-item + .wl-item { margin-top:12px }
+  .wl-item.paused { opacity:.6 }
+  .wl-item .name { font-weight:600; color:var(--fg); font-size:14px }
+  .wl-item .acts { display:flex; align-items:center; gap:4px; flex:none }
+{% endblock %}
+{% block content %}
+<div class="panel pad">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px">
+    <div>
+      <h2>Product watchlist</h2>
+      <p class="small muted" style="margin:4px 0 0">Checked every hour against new deals. Hits are pushed instantly, after the AI confirms it's really
+        that product (men's/unisex version for clothing, shoes and jewelry).</p>
+    </div>
+  </div>
+
+  <form class="wl-form" method="post" action="/watchlist/add">
+    <input class="grow" name="query" placeholder="Product, e.g. Sony WH-1000XM5">
+    <input name="brand" placeholder="Brand (optional)" style="width:160px">
+    <select name="category"><option value="">Any category</option>
+      {% for c in categories %}<option>{{ c }}</option>{% endfor %}</select>
+    <input name="max_price" placeholder="Max €" style="width:90px">
+    <input name="min_discount" placeholder="Min %" style="width:80px">
+    <button class="btn primary">{{ icon("plus", "sm") }}Add watch item</button>
+  </form>
+</div>
+
+<div style="margin-top:24px">
+  <div class="eyebrow" style="margin-bottom:12px">Watching ({{ items|length }})</div>
+  {% for w in items %}
+  <div class="wl-item {{ '' if w.active else 'paused' }}">
+    <div style="min-width:0">
+      <div class="name">{{ w.describe() }}</div>
+      <div class="small muted" style="margin-top:2px">#{{ w.id }} · added {{ w.created_at|local }}</div>
+    </div>
+    <div class="acts">
+      <span class="pill {{ 'green' if w.active else '' }}" style="margin-right:8px">{{ 'Active' if w.active else 'Paused' }}</span>
+      <a class="icon-btn" href="/?q={{ (w.brand ~ ' ' ~ w.query)|trim|urlencode }}&days=30&relevant=0" title="Show matching deals">{{ icon("search", "sm") }}</a>
+      <form class="inline" method="post" action="/watchlist/{{ w.id }}/{{ 'pause' if w.active else 'resume' }}">
+        <button class="icon-btn" title="{{ 'Pause' if w.active else 'Resume' }}">{{ icon("pause" if w.active else "play", "sm") }}</button></form>
+      <form class="inline" method="post" action="/watchlist/{{ w.id }}/remove" onsubmit="return confirm('Remove this watch item?')">
+        <button class="icon-btn rose" title="Remove">{{ icon("trash", "sm") }}</button></form>
+    </div>
+  </div>
+  {% else %}
+  <div class="panel pad" style="text-align:center;border-style:dashed">
+    <div class="dim">{{ icon("eye", "lg") }}</div>
+    <h3 style="margin-top:8px">Nothing on the watchlist yet</h3>
+    <p class="small muted" style="margin:4px 0 0">Add a product above, for example “AirPods Pro” with max € 180.</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon %}
+{% block style %}
+  .health { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:24px }
+  .hbox { padding:16px }
+  .hbox .v { font-size:14px; font-weight:600; display:flex; gap:6px; align-items:center; margin-top:6px; color:var(--fg) }
+  .hbox .v.ok { color:var(--green) } .hbox .v.off { color:var(--muted) } .hbox .v.bad { color:var(--rose) }
+  .hbox p { margin:4px 0 0; font-size:12px; color:var(--dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none }
+  .dot.ok { background:var(--green); box-shadow:0 0 0 3px var(--green-bg) } .dot.bad { background:var(--rose); box-shadow:0 0 0 3px var(--rose-bg) }
+  .dot.idle { background:var(--dim) }
+  .section-head { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin:0 0 12px }
+{% endblock %}
+{% block content %}
+{% set ok_sources = sources|selectattr('last_error', 'none')|list|length if sources else 0 %}
+<div class="health">
+  <div class="panel hbox"><span class="eyebrow">Agent</span>
+    <div class="v ok">{{ icon("activity", "sm") }}Running</div><p>scheduler + dashboard</p></div>
+  <div class="panel hbox"><span class="eyebrow">Sources</span>
+    <div class="v {{ 'ok' if sources and ok_sources == sources|length else 'bad' if sources else 'off' }}">{{ icon("check", "sm") }}{{ ok_sources }} / {{ sources|length }} healthy</div>
+    <p>{{ configured|length }} enabled</p></div>
+  <div class="panel hbox"><span class="eyebrow">AI scorer</span>
+    <div class="v {{ 'ok' if scorer not in ('off', 'heuristic', 'rules') else 'off' }}">{{ icon("sparkles", "sm") }}{{ scorer }}</div><p>deal scoring</p></div>
+  <div class="panel hbox"><span class="eyebrow">Push (ntfy)</span>
+    <div class="v {{ 'ok' if push else 'off' }}">{{ icon("bell", "sm") }}{{ 'On' if push else 'Off' }}</div><p>digests + instant alerts</p></div>
+  <div class="panel hbox"><span class="eyebrow">End-of-day email</span>
+    <div class="v {{ 'ok' if email else 'off' }}">{{ icon("file", "sm") }}{{ 'On' if email else 'Off' }}</div>
+    <p>{{ 'last: ' ~ eod if eod else 'set EMAIL_ENABLED + SMTP_* in .env' }}</p></div>
+  <div class="panel hbox"><span class="eyebrow">Excel log</span>
+    <div class="v {{ 'ok' if excel == 'ok' else 'off' if excel == 'n/a' else 'bad' }}">{{ icon("file", "sm") }}{{ 'waiting for next export' if excel == 'n/a' else excel }}</div>
+    <p title="{{ excel_path }}">{{ excel_path }}</p></div>
+  <div class="panel hbox"><span class="eyebrow">Stored</span>
+    <div class="v">{{ icon("tag", "sm") }}{{ stats.deals }} deals</div><p>{{ stats.scored }} scored · {{ stats.alerts }} alerts</p></div>
+</div>
+
+<div class="section-head"><span class="eyebrow">Jobs</span></div>
+<div class="panel table-wrap" style="margin-bottom:24px">
+  <table class="t">
+    <thead><tr><th>Job</th><th>Last run</th><th></th><th></th></tr></thead>
+    <tbody>
+    {% for job, when in jobs.items() %}
+    <tr><td style="color:var(--fg);font-weight:500">{{ job }}</td><td>{{ when|local or 'never' }} <span class="small dim">{{ when|ago }}</span></td>
+      <td>{% if job in running %}<span class="pill blue">{{ icon("refresh", "sm spin") }}running</span>{% endif %}</td>
+      <td class="num"><form class="inline" method="post" action="/run/{{ job }}">
+        <button class="btn" {{ 'disabled' if job in running else '' }}>{{ icon("play", "sm") }}Run now</button></form></td></tr>
+    {% endfor %}
+    <tr><td style="color:var(--fg);font-weight:500">excel</td><td>{{ excel }}</td><td></td>
+      <td class="num"><form class="inline" method="post" action="/run/excel"><button class="btn">{{ icon("file", "sm") }}Export now</button></form></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section-head"><span class="eyebrow">Sources</span>
+  <span class="small dim">Sources that block automated access are skipped and retried with increasing back-off.</span></div>
+<div class="panel table-wrap">
+  <table class="t">
+    <thead><tr><th>Source</th><th>Last OK</th><th class="num">Items</th><th>Last error</th><th>Blocked until</th><th class="num">Failures</th></tr></thead>
+    <tbody>
+    {% for s in sources %}
+    <tr><td><span style="display:inline-flex;gap:10px;align-items:center;color:var(--fg);font-weight:500">
+        <span class="dot {{ 'bad' if s.last_error else 'ok' if s.last_ok else 'idle' }}"></span>{{ s.name }}</span></td>
+      <td class="small nowrap">{{ s.last_ok|local or '–' }} <span class="dim">{{ s.last_ok|ago }}</span></td>
+      <td class="num">{{ s['items'] if s['items'] is not none else '' }}</td>
+      <td class="small" style="color:var(--rose);max-width:360px">{{ s.last_error or '' }}</td>
+      <td class="small nowrap">{{ s.blocked_until|local }}</td><td class="num">{{ s.failures }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No source has run yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

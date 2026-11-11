@@ -1,0 +1,263 @@
+# Your shopping preferences. Edit here, in the dashboard (http://127.0.0.1:8765/prefs) or via
+# `python -m deal_agent prefs ...`. Changes apply on the next job run (schedule changes need a restart).
+
+# Categories. Keywords (lower-case, German + English) pre-classify deals before the LLM sees
+# them. Keywords of 5+ letters also match inside German compound words ("creme" ->
+# "Feuchtigkeitscreme"); shorter ones only match at the start of a word.
+categories:
+  electronics:
+    keywords:
+      - elektronik
+      - kopfhörer
+      - headphones
+      - earbuds
+      - laptop
+      - notebook
+      - smartphone
+      - handy
+      - tablet
+      - monitor
+      - fernseher
+      - oled
+      - ssd
+      - festplatte
+      - kamera
+      - camera
+      - konsole
+      - playstation
+      - smartwatch
+      - lautsprecher
+      - speaker
+      - ladegerät
+      - powerbank
+      - router
+      - gaming
+      - drohne
+  clothing:
+    keywords:
+      - kleidung
+      - bekleidung
+      - jacke
+      - jacket
+      - hoodie
+      - jeans
+      - shirt
+      - pullover
+      - mantel
+      - hose
+      - chino
+      - sweatshirt
+      - sweatjacke
+      - weste
+      - anzug
+      - sakko
+      - hemd
+      - polo
+      - boxershorts
+      - socken
+      - jogginghose
+      - fleece
+  shoes:
+    keywords:
+      - schuhe
+      - schuh
+      - sneaker
+      - shoes
+      - stiefel
+      - boots
+      - laufschuh
+      - wanderschuh
+      - sandalen
+      - slipper
+      - air force
+      - air max
+      - dunk
+      - samba
+      - gazelle
+      - superstar
+      - stan smith
+      - new balance
+      - jordan
+      - fußballschuh
+      - fussballschuh
+      - multinocken
+      - hallenschuh
+      - futsal
+  jewelry_accessories:
+    keywords:
+      - uhren
+      - armbanduhr
+      - herrenuhr
+      - chronograph
+      - automatikuhr
+      - watch
+      - kette
+      - halskette
+      - chain
+      - herrenring
+      - siegelring
+      - armband
+      - bracelet
+      - schmuck
+      - manschettenknöpfe
+      - sonnenbrille
+      - sunglasses
+      - gürtel
+      - geldbörse
+      - portemonnaie
+      - wallet
+      - rucksack
+      - basecap
+      - snapback
+      - mütze
+      - schal
+      - g-shock
+      - edifice
+      - eco-drive
+      - prospex
+      - presage
+      - uhr
+  cosmetics:
+    keywords:
+      - beauty
+      - kosmetik
+      - cosmetics
+      - parfum
+      - parfüm
+      - eau de toilette
+      - eau de parfum
+      - perfume
+      - duft
+      - hautpflege
+      - skincare
+      - creme
+      - serum
+      - shampoo
+      - rasierer
+      - rasur
+      - bartpflege
+      - deo
+      - pflege
+
+# Clothing, shoes and jewelry/accessories are for a man: women's and kids' items are filtered
+# out (title keywords such as "Damen", "Kinder", "Women", the source category, and the LLM's
+# audience judgement). Unisex items are kept. Cosmetics have no restriction.
+gender:
+  men_only_categories:
+    - clothing
+    - shoes
+    - jewelry_accessories
+
+# Brands you like. Budget brands should be genuinely cheap; premium brands need a real discount.
+brands:
+  budget:
+    - Xiaomi
+    - Anker
+    - Soundcore
+    - Baseus
+    - Ugreen
+    - Redmi
+    - H&M
+    - Uniqlo
+    - Decathlon
+    - Jack & Jones
+    - Casio
+    - CeraVe
+    - Nivea
+    - Balea
+    - The Ordinary
+  premium:
+    - Apple
+    - Sony
+    - Samsung
+    - Bose
+    - Sennheiser
+    - Dyson
+    - Logitech
+    - Garmin
+    - Nike
+    - Adidas
+    - New Balance
+    - Levi's
+    - The North Face
+    - Patagonia
+    - Tommy Hilfiger
+    - Hugo Boss
+    - Ralph Lauren
+    - Tissot
+    - Seiko
+    - Fossil
+    - Thomas Sabo
+    - Dior
+    - Chanel
+    - Armani
+    - Paco Rabanne
+    - Clinique
+    - La Roche-Posay
+    - Citizen
+
+# Deals mentioning any of these are ignored regardless of score.
+exclude_keywords:
+  - gutschein für neukunden
+  - vertrag
+  - tarif
+  - versicherung
+  - lotto
+  - kredit
+
+# Student status: used to flag student discounts in alerts and estimate the final price.
+# `programs` lists the ones you can use (keys from deal_agent/data/student_programs.yaml).
+student:
+  is_student: true
+  programs:
+    - unidays
+    - student_beans
+    - apple_education
+    - samsung_education
+    - prime_student
+    - lenovo_education
+
+scoring:
+  notify_threshold: 7.0        # 0-10; deals at or above this can appear in digests
+  watchlist_threshold: 5.0     # watchlist matches are already targeted, so a lower bar
+  min_discount_pct: 15         # hint for the scorer; deals below this score lower
+  batch_size: 10               # deals per LLM request
+  max_deals_per_run: 60        # cap on deals sent to the LLM per run
+  prefilter: true              # skip the LLM for deals with no preferred category or brand
+  details_per_run: 40          # mydealz deal pages fetched per run (shop, coupon, market price)
+
+notifications:
+  # ntfy digests at fixed local times (TIMEZONE in .env, default Europe/Berlin). Each sends the
+  # top `digest_size` deals that are new since the previous digest; skipped if nothing new.
+  # A restart is needed after changing the times.
+  digest_times: ["11:00", "14:30", "17:30", "22:30"]
+  digest_size: 3
+  digest_refresh: true         # fetch + score fresh deals right before each digest
+  # Between digests only great deals are pushed instantly:
+  instant_score: 9.0           # score >= this...
+  instant_expiry_hours: 3      # ...or above notify_threshold and ending within N hours...
+  watchlist_instant: true      # ...or a watchlist hit
+  snooze_hours: 24             # "Snooze" button: ask again after N hours
+  reminder_hours_before_expiry: 6
+  # [start, end] local hour. No instant pushes then: they are queued and lead the next
+  # digest (11:00). Set to [] to disable.
+  quiet_hours: [23, 7]
+  eod_email_time: "21:00"      # end-of-day HTML email (needs EMAIL_ENABLED=true in .env)
+
+trust:
+  below_market_pct: 50         # warn when an untrusted shop is this % below the market price
+  fakeshop_link: true          # add a Verbraucherzentrale Fakeshop-Finder link to unknown shops
+
+excel:
+  min_score: 5.0               # deals at/above this (or alerted / watchlist hits) go to "Active"
+  active_days: 30              # not seen or checked for this long -> moved to "Expired"
+
+recheck:
+  time: "12:00"                # daily re-check of Active deals (status, current price)
+  max_per_run: 150
+
+schedule:
+  discovery_hours: 3
+  watchlist_hours: 1
+  reminder_minutes: 30
+  feedback_minutes: 5          # how often ntfy button presses are picked up

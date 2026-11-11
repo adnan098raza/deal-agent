@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.venv/
+/data/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+
+# Italy profile (friends) - kept local, not part of the published DE version
+*.it.yaml

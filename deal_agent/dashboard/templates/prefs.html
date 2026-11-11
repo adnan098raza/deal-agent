@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon %}
+{% block style %}
+  .set-row { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:14px 0; border-bottom:1px solid var(--line) }
+  .set-row:last-child { border-bottom:none }
+  .set-row .lbl { font-weight:500; color:var(--text); display:block }
+  .set-row .hint { font-size:12px; color:var(--dim) }
+  .set-row input:not([type=checkbox]) { width:110px; text-align:center }
+  .progs { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin-top:12px }
+  .progs label { display:flex; gap:8px; align-items:center; padding:8px 12px; border-radius:8px; background:var(--well);
+                 border:1px solid var(--line); font-size:13px; cursor:pointer }
+  .progs label:has(input:checked) { border-color:var(--blue-bd); background:var(--blue-bg); color:var(--fg) }
+  textarea.yaml { width:100%; min-height:520px; font:13px/1.55 "Cascadia Mono",Consolas,ui-monospace,monospace; color:#a5f3fc; tab-size:2 }
+  .two { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:24px; align-items:start }
+  @media (max-width:1000px) { .two { grid-template-columns:1fr } }
+{% endblock %}
+{% block content %}
+{% for e in errors %}<div class="banner err">{{ icon("alert") }}<span>{{ e }}</span></div>{% endfor %}
+<div class="two">
+  <form class="panel pad" method="post" action="/prefs/quick">
+    <h2>Notifications &amp; scoring</h2>
+    <p class="small muted" style="margin:4px 0 8px">Quick settings. Digest-time changes apply after the agent restarts.</p>
+    <div class="set-row"><div><span class="lbl">Digest threshold</span><span class="hint">Minimum AI score (0–10) for a deal to make a digest</span></div>
+      <input name="notify_threshold" value="{{ p.notify_threshold }}"></div>
+    <div class="set-row"><div><span class="lbl">Instant alert at score</span><span class="hint">Great deals pushed right away, outside quiet hours</span></div>
+      <input name="instant_score" value="{{ p.notifications('instant_score', 9) }}"></div>
+    <div class="set-row"><div><span class="lbl">Digest times</span><span class="hint">HH:MM, comma-separated (Europe/Berlin)</span></div>
+      <input name="digest_times" value="{{ p.notifications('digest_times', [])|join(', ') }}" style="width:220px"></div>
+    <div class="set-row"><div><span class="lbl">Quiet hours</span><span class="hint">No instant pushes; they're queued for the next digest</span></div>
+      <div style="display:flex;gap:6px;align-items:center"><input name="quiet_start" value="{{ qh[0] }}" style="width:56px"> –
+        <input name="quiet_end" value="{{ qh[1] }}" style="width:56px"></div></div>
+    <div class="set-row"><div><span class="lbl">{{ icon("grad", "sm") }} I'm a student</span><span class="hint">Show student discounts and final prices</span></div>
+      <input type="checkbox" name="is_student" {{ 'checked' if p.student.is_student else '' }}></div>
+    <div style="padding-top:12px"><span class="eyebrow">Student programs I use</span>
+      <div class="progs">
+        {% for key, prog in programs.items() %}
+        <label><input type="checkbox" name="programs" value="{{ key }}" {{ 'checked' if key in p.student.programs else '' }}> {{ prog.name }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div style="margin-top:20px"><button class="btn primary">{{ icon("check", "sm") }}Save settings</button></div>
+  </form>
+
+  <form class="panel pad" method="post" action="/prefs/raw">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2>preferences.yaml</h2>
+        <p class="small muted" style="margin:4px 0 12px">Categories, keywords, brands, men's-only categories, exclusions and schedule.
+          Validated before saving.</p></div>
+      <button class="btn primary">{{ icon("check", "sm") }}Validate &amp; save</button>
+    </div>
+    <textarea class="yaml" name="yaml_text" spellcheck="false">{{ raw }}</textarea>
+  </form>
+</div>
+{% endblock %}

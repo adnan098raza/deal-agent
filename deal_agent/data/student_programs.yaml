@@ -1,0 +1,66 @@
+# Student discount programs. A STARTING POINT, not live data: programs, partners and
+# percentages change often and most codes sit behind a login (UNiDAYS / Student Beans), so the
+# agent can't read them automatically. `pct` values are typical/approximate and only used to
+# ESTIMATE a final price ("≈"). Edit to match what you actually see in your accounts.
+#
+#   applies_to: official_store -> only when buying from the brand's own shop
+#               any            -> wherever the brand is sold (rare)
+#   stacks_with_sale: true / false / unknown  (does it combine with an existing sale price?)
+#   pct: null means "discount exists, amount varies" (no final-price estimate)
+
+programs:
+  apple_education:
+    name: Apple Education (Bildungsrabatt)
+    url: https://www.apple.com/de-edu/store
+    brands: [Apple]
+    shops: [apple.com]
+    applies_to: official_store
+    pct: 10
+    stacks_with_sale: false
+    note: varies by product; Apple rarely runs sales, so compare with the deal price
+
+  samsung_education:
+    name: Samsung Education Offers Programm
+    url: https://www.samsung.com/de/multistore/edu/
+    brands: [Samsung]
+    shops: [samsung.com]
+    applies_to: official_store
+    pct: 10
+    stacks_with_sale: unknown
+    note: often higher on selected devices; verification required
+
+  prime_student:
+    name: Amazon Prime Student
+    url: https://www.amazon.de/primestudent
+    shops: [amazon.de]
+    merchants: [Amazon]
+    applies_to: official_store
+    pct: 0
+    stacks_with_sale: true
+    note: no extra % on the deal price – free fast shipping and Prime deals at half the Prime fee
+
+  unidays:
+    name: UNiDAYS
+    url: https://www.myunidays.com/DE/de-DE
+    applies_to: official_store
+    pct: 10
+    stacks_with_sale: unknown
+    brands: [Nike, Adidas, Puma, "Levi's", The North Face, Tommy Hilfiger, Calvin Klein, ASOS,
+             Samsung, Lenovo, Dell, HP, Microsoft, Clinique, Estée Lauder]
+
+  student_beans:
+    name: Student Beans
+    url: https://www.studentbeans.com/de
+    applies_to: official_store
+    pct: 10
+    stacks_with_sale: unknown
+    brands: [Adidas, ASOS, New Balance, Superdry, Hollister, Lacoste, Logitech, Garmin]
+
+  lenovo_education:
+    name: Lenovo Education Store
+    url: https://www.lenovo.com/de/de/d/deals/student/
+    brands: [Lenovo]
+    shops: [lenovo.com]
+    applies_to: official_store
+    pct: null
+    stacks_with_sale: unknown

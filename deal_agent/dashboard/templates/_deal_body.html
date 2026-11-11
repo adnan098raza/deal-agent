@@ -1,0 +1,114 @@
+{% from "_ui.html" import icon, score, kind_pills %}
+<style>
+  .dd-hero { display:flex; gap:16px; padding:16px; border-radius:12px; background:var(--well); border:1px solid var(--line) }
+  .dd-img { width:96px; height:96px; flex:none; border-radius:8px; background:#f1f5f9; display:grid; place-items:center; overflow:hidden }
+  .dd-img img { max-width:90%; max-height:90%; object-fit:contain }
+  .dd-img.none { background:var(--panel-solid); color:var(--line-2); border:1px solid var(--line) }
+  .dd-hero h2 { font-size:16px; font-weight:600; line-height:1.35; margin:6px 0 4px }
+  .dd-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px }
+  @media (max-width:520px) { .dd-grid { grid-template-columns:1fr } }
+  .dd-box { padding:14px 16px; border-radius:10px; background:var(--well); border:1px solid var(--line) }
+  .dd-box .v { font-size:22px; font-weight:700; color:var(--fg); font-variant-numeric:tabular-nums; margin-top:2px }
+  .dd-box p { margin:4px 0 0; font-size:12px; color:var(--muted) }
+  .dd-actions { display:flex; gap:8px; flex-wrap:wrap }
+  .chart { width:100%; height:120px; display:block }
+  .dd-section { margin-top:20px }
+  .dd-section > .eyebrow { display:block; margin-bottom:8px }
+  .dd-list { font-size:13px; border:1px solid var(--line); border-radius:10px; overflow:hidden }
+  .dd-list .r { display:flex; justify-content:space-between; gap:12px; padding:8px 12px; border-top:1px solid var(--line) }
+  .dd-list .r:first-child { border-top:none }
+</style>
+{% set img = d.image_url|image %}
+{% set here = '/deal/' ~ d.id %}
+<div class="dd-hero">
+  <div class="dd-img {{ '' if img else 'none' }}">{% if img %}<img src="{{ img }}" alt="" referrerpolicy="no-referrer"
+       onerror="this.parentNode.classList.add('none');this.remove()">{% endif %}<span class="ph">{{ icon("image", "lg") }}</span></div>
+  <div style="min-width:0">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <span class="pill">{{ d.merchant or d.source }}</span>{{ score(d.score) }}
+      <span class="pill {{ d.status|replace(' ', '-') }}">{{ d.status }}</span>{{ kind_pills(kinds) }}
+    </div>
+    <h2>{{ d.title }}</h2>
+    <div class="small muted">{{ d.category or '–' }}{% if d.brand %} · {{ d.brand }}{% endif %} · via {{ d.source }}{% if d.audience %} · for {{ d.audience }}{% endif %}</div>
+  </div>
+</div>
+
+<div class="dd-actions" style="margin:16px 0">
+  <a class="btn primary" href="{{ d.link }}" target="_blank" rel="noopener">{{ icon("ext", "sm") }}Open deal</a>
+  {% if not d.dismissed %}
+  <form class="inline" method="post" action="/deal/{{ d.id }}/snooze"><input type="hidden" name="back" value="{{ here }}">
+    <button class="btn">{{ icon("clock", "sm") }}Snooze</button></form>
+  <form class="inline" method="post" action="/deal/{{ d.id }}/dismiss"><input type="hidden" name="back" value="{{ here }}">
+    <button class="btn danger">{{ icon("xcircle", "sm") }}Not interested</button></form>
+  {% else %}
+  <form class="inline" method="post" action="/deal/{{ d.id }}/restore"><input type="hidden" name="back" value="{{ here }}">
+    <button class="btn">{{ icon("undo", "sm") }}Undo not interested</button></form>
+  {% endif %}
+  {% if d.product_key or d.brand %}<a class="btn" href="/?q={{ (d.brand or d.title.split()[:3]|join(' '))|urlencode }}&days=30&relevant=0">{{ icon("search", "sm") }}Similar</a>{% endif %}
+</div>
+
+<div class="dd-grid">
+  <div class="dd-box"><span class="eyebrow">Price</span>
+    <div class="v">{{ d.effective_price|eur }}{% if d.discount_pct %} <span class="pill green" style="vertical-align:4px">−{{ '%.0f'|format(d.discount_pct) }}%</span>{% endif %}</div>
+    {% if d.original_price %}<p>was <s>{{ d.original_price|eur }}</s></p>{% endif %}
+    {% if d.market_price %}<p>Comparison price: {{ d.market_price|eur }}</p>{% endif %}
+    {% if d.shipping %}<p>Shipping: {{ d.shipping|eur }}{% if d.final_price_est %} · final ≈ {{ d.final_price_est|eur }}{% endif %}</p>{% endif %}
+    {% if d.coupon_code %}<p>Code <b class="mono" style="color:var(--fg)">{{ d.coupon_code }}</b></p>{% endif %}
+  </div>
+  <div class="dd-box"><span class="eyebrow">AI score</span>
+    <div class="v">{{ '%.1f'|format(d.score) if d.score is not none else '–' }}<span class="small dim"> / 10</span></div>
+    <p>{{ d.score_reason or 'Not scored yet.' }}</p>
+    {% if d.penalty %}<p>Lowered by {{ '%.1f'|format(d.penalty) }} from your “not interested” feedback</p>{% endif %}
+  </div>
+  <div class="dd-box"><span class="eyebrow">Shop</span>
+    <div style="margin-top:4px;color:var(--fg);font-weight:600">{{ d.shop }}</div>
+    <p class="t-{{ d.trust_label or 'unknown' }}" style="display:flex;gap:6px;align-items:center">{{ icon("shield", "sm") }}{{ d.trust_text }}</p>
+    {% if d.trust_reason %}<p>{{ d.trust_reason }}</p>{% endif %}
+    {% for w in d.warnings %}<p style="color:var(--rose);display:flex;gap:6px">{{ icon("alert", "sm") }}<span>{{ w }}</span></p>{% endfor %}
+  </div>
+  <div class="dd-box"><span class="eyebrow">Timing</span>
+    <div style="margin-top:4px;color:var(--fg);font-weight:600">{{ icon("clock", "sm") }} {{ d.time_left() }}</div>
+    <p>First seen {{ d.first_seen|local }} ({{ d.first_seen|ago }})</p>
+    <p>Last checked {{ d.last_checked|local or 'never' }}</p>
+  </div>
+  {% if d.student %}
+  <div class="dd-box" style="grid-column:1/-1"><span class="eyebrow">{{ icon("grad", "sm") }} Student discount</span>
+    <div style="margin-top:4px;color:var(--fg);font-weight:600">{{ d.student.program }}{% if d.student.pct %} ≈{{ d.student.pct }}%{% endif %}
+      {% if d.student.final_est %} → ≈ {{ d.student.final_est|eur }}{% endif %}</div>
+    <p>Stacks with this deal: <b>{{ d.student.stacks }}</b>{% if d.student.why %} – {{ d.student.why }}{% endif %}</p>
+    {% if d.student.url %}<p><a href="{{ d.student.url }}" target="_blank" rel="noopener">Program page</a></p>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="dd-section">
+  <span class="eyebrow">Price history{% if d.product_key %} · <span class="mono" style="text-transform:none;letter-spacing:0">{{ d.product_key }}</span>{% endif %}</span>
+  {% if points %}
+  <div class="dd-box" style="padding:12px 12px 8px">
+    <svg class="chart" viewBox="0 0 300 60" preserveAspectRatio="none" aria-label="Price over time">
+      <polygon points="{{ points }} 300,60 0,60" fill="rgba(59,130,246,.12)"/>
+      <polyline points="{{ points }}" fill="none" stroke="#60a5fa" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    </svg>
+    <div class="tiny dim" style="display:flex;justify-content:space-between;margin-top:4px">
+      <span>low {{ lo|eur }}</span><span>{{ series|length }} price points</span><span>high {{ hi|eur }}</span></div>
+  </div>
+  {% endif %}
+  <div class="dd-list" style="margin-top:8px">
+    {% for when, price, shop in (series|reverse|list)[:12] %}
+    <div class="r"><span class="muted">{{ when|local }}</span><span>{{ shop }}</span><b class="num" style="color:var(--fg)">{{ price|eur }}</b></div>
+    {% else %}<div class="r muted">No price history yet.</div>{% endfor %}
+  </div>
+</div>
+
+{% if offers %}
+<div class="dd-section">
+  <span class="eyebrow">Same product elsewhere</span>
+  <div class="dd-list">
+    {% for o in offers %}
+    <div class="r"><a href="/deal/{{ o.id }}" data-drawer style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.shop }}</a>
+      <span class="small t-{{ o.trust_label or 'unknown' }}">{{ o.trust_text }}</span>
+      <b class="num" style="color:var(--fg)">{{ o.effective_price|eur }}</b></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

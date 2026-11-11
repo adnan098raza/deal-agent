@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon, score, status_pill, kind_pills, deal_actions %}
+{% block style %}
+  .tiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:24px }
+  @media (max-width:1000px) { .tiles { grid-template-columns:repeat(2,minmax(0,1fr)) } }
+  @media (max-width:560px) { .tiles { grid-template-columns:1fr } }
+  .tile { padding:20px; display:flex; align-items:center; justify-content:space-between; gap:12px }
+  .tile .big { font-size:30px; font-weight:800; color:var(--fg); letter-spacing:-.03em; line-height:1.1 }
+  .tile .row { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:4px }
+  .tile .delta { font-size:12px; font-weight:500; display:inline-flex; gap:4px; align-items:center }
+  .tile .note { font-size:12px; color:var(--dim); margin-top:4px }
+  .tile .badge { padding:14px; border-radius:12px; border:1px solid }
+  .badge.blue { background:var(--blue-bg); border-color:var(--blue-bd); color:var(--blue-hi) }
+  .badge.green { background:var(--green-bg); border-color:var(--green-bd); color:var(--green) }
+  .badge.rose { background:var(--rose-bg); border-color:var(--rose-bd); color:var(--rose) }
+  .badge.violet { background:var(--violet-bg); border-color:var(--violet-bd); color:var(--violet) }
+  .up { color:var(--green) } .down { color:var(--rose) } .flat { color:var(--muted) }
+
+  .toolbar { padding:16px; margin-bottom:24px }
+  .toolbar form { display:flex; flex-wrap:wrap; align-items:center; gap:12px }
+  .toolbar .q { flex:1; min-width:240px; position:relative }
+  .toolbar .q input { width:100%; padding-left:36px }
+  .toolbar .q .ic { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--dim) }
+  .toolbar .small-in { width:64px; text-align:center }
+  .toolbar .sub { font-size:12px; color:var(--muted); margin-top:12px }
+  @media (max-width:640px) { .toolbar .q { flex-basis:100%; min-width:0 } .toolbar select { flex:1 1 40%; min-width:0 } }
+
+  .results-head { display:flex; align-items:center; justify-content:space-between; margin:0 0 12px }
+  .seg { display:flex; padding:4px; gap:2px; border-radius:8px; background:var(--panel-solid); border:1px solid var(--line) }
+  .seg a { display:grid; place-items:center; padding:6px; border-radius:6px; color:var(--muted) }
+  .seg a:hover { color:var(--soft); text-decoration:none } .seg a.on { background:#1e293b; color:var(--blue-hi) }
+
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr)); gap:20px }
+  .card { min-width:0 }
+  .card { display:flex; flex-direction:column; overflow:hidden; cursor:pointer; transition:border-color .15s, box-shadow .15s, transform .15s }
+  .card:hover { border-color:var(--line-2); box-shadow:0 12px 32px rgba(23,37,84,.35); transform:translateY(-1px) }
+  .card.dim { opacity:.55 }
+  .thumb { position:relative; height:168px; background:#f1f5f9; display:grid; place-items:center; overflow:hidden }
+  .thumb img { max-width:86%; max-height:86%; object-fit:contain; transition:transform .3s }
+  .card:hover .thumb img { transform:scale(1.05) }
+  .thumb.none { background:linear-gradient(135deg,#0f172a,#1e293b); color:var(--line-2) }
+  .thumb .ic.lg { width:40px; height:40px }
+  .ph { display:none } .none > .ph { display:grid; place-items:center }
+  .thumb .tl { position:absolute; top:12px; left:12px; right:64px; display:flex; gap:6px; flex-wrap:wrap }
+  .thumb .tr { position:absolute; top:12px; right:12px }
+  .thumb .shop { background:rgba(15,23,42,.82); color:#e2e8f0; border-color:rgba(51,65,85,.9); backdrop-filter:blur(6px);
+                 max-width:100%; overflow:hidden; text-overflow:ellipsis }
+  .thumb .tr .score { box-shadow:0 2px 8px rgba(0,0,0,.3) }
+  .card .body { padding:16px; display:flex; flex-direction:column; gap:10px; flex:1 }
+  .card h3 { font-size:14px; font-weight:500; line-height:1.4; color:var(--text); display:-webkit-box; -webkit-line-clamp:2;
+             -webkit-box-orient:vertical; overflow:hidden }
+  .card:hover h3 { color:var(--blue-hi) }
+  .card h3 a { color:inherit } .card h3 a:hover { text-decoration:none }
+  .price-row { display:flex; align-items:baseline; justify-content:space-between; gap:8px }
+  .price { font-size:20px; font-weight:700; color:var(--fg); font-variant-numeric:tabular-nums }
+  .was { font-size:12px; color:var(--dim); text-decoration:line-through; margin-left:6px }
+  .attrs { display:flex; flex-wrap:wrap; gap:6px }
+  .warnline { font-size:12px; color:var(--rose); display:flex; gap:6px; align-items:flex-start }
+  .card .foot { padding:8px 12px 8px 16px; border-top:1px solid rgba(30,41,59,.6); background:rgba(2,6,23,.35);
+                display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; color:var(--dim) }
+  .card .foot .trust { display:block; min-width:0; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+  .card .foot .trust .ic { margin-right:6px }
+  .card .foot .seen { white-space:nowrap; flex:none }
+  .card .foot .acts { display:flex; gap:2px; flex:none }
+
+  .t .prod { display:flex; align-items:center; gap:12px; min-width:280px }
+  .t .mini { width:40px; height:40px; border-radius:6px; background:#f1f5f9; flex:none; display:grid; place-items:center; overflow:hidden;
+             border:1px solid var(--line) }
+  .t .mini img { max-width:90%; max-height:90%; object-fit:contain }
+  .t .mini.none { background:var(--well); color:var(--line-2) }
+  .t .ttl { color:var(--text); font-weight:500; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; max-width:380px }
+  .t .ttl:hover { color:var(--blue-hi); text-decoration:none }
+  .empty { padding:64px 16px; text-align:center; border:1px dashed var(--line); border-radius:12px; background:rgba(15,23,42,.3) }
+{% endblock %}
+{% block content %}
+{% set back = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') %}
+
+<section class="tiles">
+  {% set diff = m.new_24h - m.prev_24h %}
+  <div class="panel tile">
+    <div>
+      <div class="eyebrow">New in last 24 h</div>
+      <div class="row"><span class="big">{{ m.new_24h }}</span>
+        <span class="delta {{ 'up' if diff > 0 else 'down' if diff < 0 else 'flat' }}">
+          {{ icon("trend-up" if diff >= 0 else "trend-down", "sm") }}{{ '%+d'|format(diff) }} vs previous 24 h</span></div>
+      <div class="note">Found across {{ stats.deals }} stored deals</div>
+    </div>
+    <div class="badge blue">{{ icon("sparkles", "lg") }}</div>
+  </div>
+  <div class="panel tile">
+    <div>
+      <div class="eyebrow">On sale now</div>
+      <div class="row"><span class="big">{{ m.on_sale }}</span>
+        <span class="delta" style="color:var(--blue-hi)">{{ icon("percent", "sm") }}avg −{{ '%.0f'|format(m.avg_discount) }}%</span></div>
+      <div class="note">{{ m.good_on_sale }} scored ≥ {{ '%g'|format(threshold) }} · last 7 days</div>
+    </div>
+    <div class="badge green">{{ icon("tag", "lg") }}</div>
+  </div>
+  <div class="panel tile">
+    <div>
+      <div class="eyebrow">Alerts today</div>
+      <div class="row"><span class="big">{{ m.alerts_today }}</span>
+        {% if next_digest %}<span class="delta flat">{{ icon("clock", "sm") }}next digest {{ next_digest.strftime('%H:%M') }}</span>{% endif %}</div>
+      <div class="note">{{ stats.alerts }} pushes sent in total</div>
+    </div>
+    <div class="badge rose">{{ icon("bell", "lg") }}</div>
+  </div>
+  <a class="panel tile" href="/watchlist" style="text-decoration:none;color:inherit">
+    <div>
+      <div class="eyebrow">Watchlist</div>
+      <div class="row"><span class="big">{{ m.watch_active }}</span>
+        <span class="delta {{ 'up' if m.watch_hits_today else 'flat' }}">{{ icon("eye", "sm") }}{{ m.watch_hits_today }} hit(s) today</span></div>
+      <div class="note">{% if m.watch_paused %}{{ m.watch_paused }} paused · {% endif %}checked every hour</div>
+    </div>
+    <div class="badge violet">{{ icon("eye", "lg") }}</div>
+  </a>
+</section>
+
+<section class="panel toolbar">
+  <form method="get" action="/">
+    <div class="q">{{ icon("search", "sm") }}
+      <input name="q" value="{{ q }}" placeholder='Search, e.g. "last 7 days matching sony" or "nike air force"' autofocus></div>
+    <label class="inl">Days <input class="small-in" name="days" value="{{ days }}"></label>
+    <select name="category">
+      <option value="">All categories</option>
+      {% for c in categories %}<option value="{{ c }}" {{ 'selected' if c == category else '' }}>{{ c }}</option>{% endfor %}
+    </select>
+    <select name="status">
+      <option value="">Any status</option>
+      {% for st in statuses %}<option {{ 'selected' if st == status else '' }}>{{ st }}</option>{% endfor %}
+    </select>
+    <label class="inl">Min score <input class="small-in" name="min_score" value="{{ min_score }}"></label>
+    <label class="inl"><input type="checkbox" name="relevant" value="1" {{ 'checked' if relevant == '1' else '' }}> relevant only</label>
+    <button class="btn primary">Search</button>
+  </form>
+  <div class="sub">
+    {{ deals|length }} result(s){% if query %} for “{{ query }}”{% endif %}{% if days %} · last {{ days }} day(s){% endif %}
+    · {{ stats.deals }} deals stored · {{ stats.alerts }} alerts sent · {{ stats.watch_items }} active watch item(s)
+  </div>
+</section>
+
+<div class="results-head">
+  <span class="eyebrow">Deals ({{ deals|length }})</span>
+  <div class="seg" role="group" aria-label="View">
+    <a href="/?{{ params|urlencode }}&view=grid" class="{{ 'on' if view == 'grid' else '' }}" title="Cards">{{ icon("grid") }}</a>
+    <a href="/?{{ params|urlencode }}&view=table" class="{{ 'on' if view == 'table' else '' }}" title="Table">{{ icon("list") }}</a>
+  </div>
+</div>
+
+{% if not deals %}
+<div class="empty">
+  <div style="color:var(--dim)">{{ icon("alert", "lg") }}</div>
+  <h3 style="margin-top:8px">No deals found{% if query %} for “{{ query }}”{% endif %}</h3>
+  <p class="small muted" style="margin:4px 0 0">Untick “relevant only”, widen the time range, or press <b>Find deals now</b>.</p>
+</div>
+
+{% elif view == 'grid' %}
+<div class="cards">
+  {% for d in deals %}
+  {% set img = d.image_url|image %}
+  <article class="panel card {{ 'dim' if d.dismissed or d.status in ('Expired', 'Out of stock') else '' }}" data-href="/deal/{{ d.id }}">
+    <div class="thumb {{ '' if img else 'none' }}">
+      {% if img %}<img src="{{ img }}" alt="" loading="lazy" referrerpolicy="no-referrer"
+                       onerror="this.parentNode.classList.add('none');this.remove()">{% endif %}<span class="ph">{{ icon("image", "lg") }}</span>
+      <div class="tl"><span class="pill shop">{{ d.merchant or d.source }}</span>{{ status_pill(d) }}</div>
+      <div class="tr">{{ score(d.score) }}</div>
+    </div>
+    <div class="body">
+      <h3><a href="/deal/{{ d.id }}" data-drawer>{{ d.title }}</a></h3>
+      <div class="price-row">
+        <div><span class="price">{{ d.effective_price|eur }}</span>{% if d.original_price %}<span class="was">{{ d.original_price|eur }}</span>{% endif %}</div>
+        {% if d.discount_pct %}<span class="pill green">−{{ '%.0f'|format(d.discount_pct) }}%</span>{% endif %}
+      </div>
+      <div class="attrs">
+        {{ kind_pills(kinds.get(d.id)) }}
+        {% if d.category %}<span class="attr">{{ d.category }}</span>{% endif %}
+        {% if d.brand %}<span class="attr">brand: <b>{{ d.brand }}</b></span>{% endif %}
+        {% if d.coupon_code %}<span class="attr">code: <b class="mono">{{ d.coupon_code }}</b></span>{% endif %}
+        {% if d.student and d.student.final_est %}<span class="attr">{{ icon("grad", "sm") }} <b>≈ {{ d.student.final_est|eur }}</b></span>{% endif %}
+        {% if d.expires_at %}<span class="attr">{{ icon("clock", "sm") }} {{ d.time_left() }}</span>{% endif %}
+        {% if d.dismissed %}<span class="attr">not interested</span>{% endif %}
+      </div>
+      {% if d.warnings %}<div class="warnline">{{ icon("alert", "sm") }}<span>{{ d.warnings[0] }}</span></div>{% endif %}
+    </div>
+    <div class="foot">
+      <span class="trust t-{{ d.trust_label or 'unknown' }}" title="{{ d.trust_reason or '' }}">{{ icon("shield", "sm") }}{{ d.trust_text }}</span>
+      <span class="seen" title="First seen {{ d.first_seen|local }}">{{ d.first_seen|ago }}</span>
+      <span class="acts">{{ deal_actions(d, back) }}</span>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="panel table-wrap">
+  <table class="t">
+    <thead><tr><th>Score</th><th>Deal</th><th class="num">Price</th><th class="num hide-sm">Disc.</th><th>Shop</th>
+      <th class="hide-sm">Student</th><th>Status</th><th class="hide-sm">Seen</th><th></th></tr></thead>
+    <tbody>
+    {% for d in deals %}
+    {% set img = d.image_url|image %}
+    <tr data-href="/deal/{{ d.id }}" style="cursor:pointer{{ ';opacity:.55' if d.dismissed else '' }}">
+      <td>{{ score(d.score) }}</td>
+      <td><div class="prod">
+        <span class="mini {{ '' if img else 'none' }}">{% if img %}<img src="{{ img }}" alt="" loading="lazy" referrerpolicy="no-referrer"
+              onerror="this.parentNode.classList.add('none');this.remove()">{% endif %}<span class="ph">{{ icon("image", "sm") }}</span></span>
+        <div><a class="ttl" href="/deal/{{ d.id }}" data-drawer>{{ d.title }}</a>
+          <div class="tiny dim" style="margin-top:2px">{{ d.category or '–' }}{% if d.brand %} · {{ d.brand }}{% endif %}{% if d.coupon_code %} · code {{ d.coupon_code }}{% endif %}
+            {{ kind_pills(kinds.get(d.id)) }}</div>
+          {% if d.warnings %}<div class="warnline tiny" style="margin-top:2px">{{ icon("alert", "sm") }}{{ d.warnings[0] }}</div>{% endif %}</div>
+      </div></td>
+      <td class="num"><b style="color:var(--fg)">{{ d.effective_price|eur }}</b>{% if d.original_price %}<div class="tiny dim" style="text-decoration:line-through">{{ d.original_price|eur }}</div>{% endif %}</td>
+      <td class="num hide-sm" style="color:var(--green);font-weight:700;font-size:12px">{{ ('−%.0f%%'|format(d.discount_pct)) if d.discount_pct else '' }}</td>
+      <td style="min-width:140px"><div title="{{ d.shop }}">{{ d.merchant or d.shop }}</div><div class="tiny t-{{ d.trust_label or 'unknown' }} nowrap">{{ d.trust_text }}</div></td>
+      <td class="small hide-sm">{{ d.student|student }}{% if d.student and d.student.final_est %}<div class="tiny dim">≈ {{ d.student.final_est|eur }}</div>{% endif %}</td>
+      <td><span class="pill {{ d.status|replace(' ', '-') }}">{{ d.status }}</span>{% if d.expires_at %}<div class="tiny dim" style="margin-top:2px">{{ d.time_left() }}</div>{% endif %}</td>
+      <td class="small dim hide-sm nowrap" title="{{ d.first_seen|local }}">{{ d.first_seen|ago }}</td>
+      <td style="white-space:nowrap">{{ deal_actions(d, back) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
