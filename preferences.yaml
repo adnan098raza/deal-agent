@@ -162,10 +162,19 @@ brands:
     - Decathlon
     - Jack & Jones
     - Casio
+    - Swatch
     - CeraVe
     - Nivea
     - Balea
     - The Ordinary
+    - TIRTIR
+    - Anua
+    - ASOS
+    - Cider
+    - Mango
+    - Gymshark
+    - Bulk
+    - Myprotein
   premium:
     - Apple
     - Sony
@@ -195,6 +204,12 @@ brands:
     - Clinique
     - La Roche-Posay
     - Citizen
+    - Charlotte Tilbury
+    - Tatcha
+    - Drunk Elephant
+    - Glow Recipe
+    - MAC
+    - Rituals
 
 # Deals mentioning any of these are ignored regardless of score.
 exclude_keywords:

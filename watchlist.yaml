@@ -32,3 +32,46 @@ watchlist:
     category: shoes
   - query: TF
     category: shoes
+  - query: ''
+    brand: Swatch
+    category: jewelry_accessories
+    max_price: 100.0
+  - query: hawas ice
+    brand: Rasasi
+    category: cosmetics
+  - query: ''
+    brand: Charlotte Tilbury
+  - query: ''
+    brand: Tatcha
+  - query: ''
+    brand: Drunk Elephant
+  - query: ''
+    brand: Glow Recipe
+  - query: ''
+    brand: TIRTIR
+  - query: ''
+    brand: MAC
+    category: cosmetics
+  - query: ''
+    brand: La Roche-Posay
+  - query: ''
+    brand: Rituals
+  - query: ''
+    brand: Anua
+  - query: ''
+    brand: ASOS
+    category: clothing
+  - query: ''
+    brand: Cider
+    category: clothing
+  - query: ''
+    brand: New Balance
+  - query: ''
+    brand: Mango
+    category: clothing
+  - query: ''
+    brand: Gymshark
+  - query: protein
+    brand: Bulk
+  - query: ''
+    brand: Myprotein
