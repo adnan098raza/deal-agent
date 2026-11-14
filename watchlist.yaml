@@ -75,3 +75,6 @@ watchlist:
     brand: Bulk
   - query: ''
     brand: Myprotein
+  - query: viper v3 hyperspeed
+    brand: Razer
+    max_price: 50.0
